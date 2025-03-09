@@ -27,7 +27,7 @@ A public API server that enables numerical calculations and statistical analyses
 
 1. Simple calculation (no parameters):
 ```bash
-curl -X POST "https://www.statsforllm.com/calculate" \
+curl -X POST "https://www.api.statsforllm.com/calculate" \
      -H "Content-Type: application/json" \
      -d '{
            "service": "calculator",
@@ -38,7 +38,7 @@ curl -X POST "https://www.statsforllm.com/calculate" \
 
 2. Calculation with parameters (rounding to 2 decimals):
 ```bash
-curl -X POST "https://www.statsforllm.com/calculate" \
+curl -X POST "https://www.api.statsforllm.com/calculate" \
      -H "Content-Type: application/json" \
      -d '{
            "service": "calculator",
@@ -50,7 +50,7 @@ curl -X POST "https://www.statsforllm.com/calculate" \
 
 3. Statistical test with parameters:
 ```bash
-curl -X POST "https://www.statsforllm.com/calculate" \
+curl -X POST "https://www.api.statsforllm.com/calculate" \
      -H "Content-Type: application/json" \
      -d '{
            "service": "statistics",
