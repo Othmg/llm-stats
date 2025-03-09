@@ -22,6 +22,7 @@ from api.services.scipy_llm import StatisticsService
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import structlog
+import sys
 from datetime import datetime
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
@@ -29,12 +30,22 @@ import asyncio
 from functools import partial
 import resource
 
+# Configure structlog to output to stdout
+structlog.configure(
+    processors=[
+        structlog.processors.TimeStamper(fmt="iso"),
+        structlog.processors.format_exc_info,
+        structlog.processors.JSONRenderer(),
+    ],
+    logger_factory=structlog.PrintLoggerFactory(),
+)
+
+logger = structlog.get_logger()
+
 limiter = Limiter(key_func=get_remote_address)
 app = FastAPI()
 app.state.limiter = limiter
 app.add_exception_handler(429, _rate_limit_exceeded_handler)
-
-logger = structlog.get_logger()
 
 app.add_middleware(
     CORSMiddleware,
@@ -108,41 +119,45 @@ async def calculate(request: CalculationRequest):
             timeout=5.0,  # 5 second timeout
         )
         return {"result": result}
-    except resource.error as e:
-        raise HTTPException(
-            status_code=429,
-            detail={"error": "Resource limit exceeded", "message": str(e)},
-        )
+
     except asyncio.TimeoutError:
+        logger.error(
+            "timeout_error", service=request.service, calculation=request.calculation
+        )
         raise HTTPException(
             status_code=408,
-            detail={
-                "error": "Calculation timeout",
-                "message": "Calculation took too long",
-            },
+            detail={"error": "Request timeout", "message": "Calculation took too long"},
         )
+
     except ValueError as e:
-        # Handle validation errors
+        logger.error(
+            "validation_error",
+            service=request.service,
+            calculation=request.calculation,
+            error=str(e),
+        )
         raise HTTPException(
             status_code=400, detail={"error": "Invalid input", "message": str(e)}
         )
+
     except (TypeError, RuntimeError) as e:
-        # Handle numpy/scipy specific errors
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "error": "Calculation error",
-                "message": str(e),
-                "calculation": request.calculation,
-            },
-        )
-    except Exception as e:
-        # Log unexpected errors
         logger.error(
             "calculation_error",
             service=request.service,
             calculation=request.calculation,
             error=str(e),
+        )
+        raise HTTPException(
+            status_code=400, detail={"error": "Calculation error", "message": str(e)}
+        )
+
+    except Exception as e:
+        logger.error(
+            "unexpected_error",
+            service=request.service,
+            calculation=request.calculation,
+            error=str(e),
+            error_type=type(e).__name__,
         )
         raise HTTPException(
             status_code=500,
