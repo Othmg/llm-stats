@@ -139,9 +139,6 @@ pytest tests/
 ### Local Development
 The API will be available at `http://localhost:8000`
 
-API documentation available at:
-- Swagger UI: `http://localhost:8000/docs`
-- ReDoc: `http://localhost:8000/redoc`
 
 ## License
 MIT License - feel free to use in your projects
