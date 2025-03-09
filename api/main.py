@@ -43,10 +43,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=["your-api-domain.vercel.app"])
-
 app.add_middleware(
-    TrustedHostMiddleware, allowed_hosts=["*.vercel.app"]  # Allow all Vercel subdomains
+    TrustedHostMiddleware,
+    allowed_hosts=[
+        "www.statsforllm.com",  # Your production domain
+        "*.vercel.app",  # Vercel preview deployments
+        "localhost",  # Local development
+        "127.0.0.1",  # Local development
+    ],
 )
 
 

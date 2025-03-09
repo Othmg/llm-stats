@@ -89,12 +89,12 @@ A public API server built with FastAPI that enables numerical calculations and s
 
 ```bash
 # Calculate mean
-curl -X POST "https://your-api.vercel.app/calculate" \
+curl -X POST "https://www.statsforllm.com/calculate" \
      -H "Content-Type: application/json" \
      -d '{"service":"calculator","calculation":"mean","data":[1,2,3,4,5]}'
 
 # Perform t-test
-curl -X POST "https://your-api.vercel.app/calculate" \
+curl -X POST "https://www.statsforllm.com/calculate" \
      -H "Content-Type: application/json" \
      -d '{"service":"statistics","calculation":"ttest_1samp","data":[1,2,3,4,5]}'
 ```
