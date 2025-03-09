@@ -17,8 +17,8 @@ Endpoints:
 from fastapi import FastAPI, HTTPException, Depends
 from pydantic import BaseModel, validator
 from typing import List, Any, Literal
-from services.numpy_llm import CalculatorService
-from services.scipy_llm import StatisticsService
+from api.services.numpy_llm import CalculatorService
+from api.services.scipy_llm import StatisticsService
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import structlog
