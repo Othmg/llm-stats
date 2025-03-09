@@ -1,78 +1,6 @@
 # FastAPI NumPy and SciPy Calculation Server
 
-A public API server built with FastAPI that enables numerical calculations and statistical analyses using NumPy and SciPy.
-
-## API Services
-
-### numpy Service (`service: "numpy_llm"`)
-- **Basic Operations:**
-  - `sum`: Sum of array elements
-  - `mean`: Arithmetic mean
-  - `std`: Standard deviation
-  - `min`: Minimum value
-  - `max`: Maximum value
-  - `median`: Median value
-  - `prod`: Product of array elements
-  - `var`: Variance
-  
-- **Array Operations:**
-  - `cumsum`: Cumulative sum
-  - `cumprod`: Cumulative product
-  - `diff`: Calculate discrete difference
-  
-- **Mathematical Functions:**
-  - `abs`: Absolute value
-  - `sqrt`: Square root
-  - `log`: Natural logarithm
-  - `log10`: Base-10 logarithm
-  - `exp`: Exponential
-  - `square`: Square each element
-  
-- **Rounding:**
-  - `floor`: Floor of each element
-  - `ceil`: Ceiling of each element
-  - `round`: Round to given decimals
-
-- **Trigonometric:**
-  - `sin`: Sine
-  - `cos`: Cosine
-  - `tan`: Tangent
-  - `arcsin`: Inverse sine
-  - `arccos`: Inverse cosine
-  - `arctan`: Inverse tangent
-
-### scipy Service (`service: "scipy_llm"`)
-- **Distribution Tests:**
-  - `normaltest`: Test for normal distribution
-  - `shapiro`: Shapiro-Wilk test
-  - `anderson`: Anderson-Darling test
-  
-- **Parametric Tests:**
-  - `ttest_1samp`: One-sample t-test
-  - `ttest_ind`: Independent two-sample t-test
-  - `ttest_rel`: Paired t-test
-  - `f_oneway`: One-way ANOVA
-  
-- **Non-parametric Tests:**
-  - `mannwhitneyu`: Mann-Whitney U test
-  - `kruskal`: Kruskal-Wallis H-test
-  - `wilcoxon`: Wilcoxon signed-rank test
-  
-- **Correlation Analysis:**
-  - `pearsonr`: Pearson correlation coefficient
-  - `spearmanr`: Spearman rank correlation
-  
-- **Other Tests:**
-  - `chisquare`: Chi-square test
-  - `fisher_exact`: Fisher exact test
-  - `levene`: Levene test for variance equality
-  - `ks_2samp`: Two-sample Kolmogorov-Smirnov test
-  
-- **Descriptive Statistics:**
-  - `describe`: Summary statistics
-  - `zscore`: Z-score standardization
-  - `skew`: Sample skewness
-  - `kurtosis`: Sample kurtosis
+A public API server that enables numerical calculations and statistical analyses using NumPy and SciPy functions.
 
 ## API Usage
 
@@ -81,25 +9,102 @@ A public API server built with FastAPI that enables numerical calculations and s
 {
     "service": "calculator | statistics",
     "calculation": "operation_name",
-    "data": [1, 2, 3, 4, 5]
+    "data": [1, 2, 3, 4, 5],
+    "params": {
+        "param1": value1,
+        "param2": value2
+    }
 }
 ```
 
-### Example Requests
+### Parameters
+- The `params` field accepts any parameters that the underlying NumPy/SciPy functions require
+- Refer to the official documentation for specific parameter requirements:
+  - NumPy functions: [NumPy Documentation](https://numpy.org/doc/stable/reference/index.html)
+  - SciPy statistics: [SciPy Stats Documentation](https://docs.scipy.org/doc/scipy/reference/stats.html)
 
+### Examples
+
+1. Simple calculation (no parameters):
 ```bash
-# Calculate mean
 curl -X POST "https://www.statsforllm.com/calculate" \
      -H "Content-Type: application/json" \
-     -d '{"service":"calculator","calculation":"mean","data":[1,2,3,4,5]}'
-
-# Perform t-test
-curl -X POST "https://www.statsforllm.com/calculate" \
-     -H "Content-Type: application/json" \
-     -d '{"service":"statistics","calculation":"ttest_1samp","data":[1,2,3,4,5]}'
+     -d '{
+           "service": "calculator",
+           "calculation": "mean",
+           "data": [1, 2, 3, 4, 5]
+         }'
 ```
 
-## Limits and Security
+2. Calculation with parameters (rounding to 2 decimals):
+```bash
+curl -X POST "https://www.statsforllm.com/calculate" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "service": "calculator",
+           "calculation": "round",
+           "data": [1.2345, 2.5678],
+           "params": {"decimals": 2}
+         }'
+```
+
+3. Statistical test with parameters:
+```bash
+curl -X POST "https://www.statsforllm.com/calculate" \
+     -H "Content-Type: application/json" \
+     -d '{
+           "service": "statistics",
+           "calculation": "ttest_1samp",
+           "data": [1, 2, 3, 4, 5],
+           "params": {"popmean": 0}
+         }'
+```
+
+## Supported Functions
+
+### Calculator Service (`service: "calculator"`)
+Basic statistical operations:
+- `sum`, `mean`, `std`, `min`, `max`, `median`, `prod`, `var`
+- Common parameters: `axis`, `dtype`, `keepdims`
+
+Array operations:
+- `cumsum`, `cumprod`, `diff`
+- Common parameters: `n` (for diff)
+
+Mathematical functions:
+- `abs`, `sqrt`, `log`, `log10`, `exp`, `square`
+- Common parameters: `out`, `where`
+
+Rounding:
+- `floor`, `ceil`, `round`
+- Common parameters: `decimals` (for round)
+
+Trigonometric:
+- `sin`, `cos`, `tan`, `arcsin`, `arccos`, `arctan`
+
+### Statistics Service (`service: "statistics"`)
+Distribution tests:
+- `normaltest`, `shapiro`, `anderson`
+
+Parametric tests:
+- `ttest_1samp` (params: `popmean`)
+- `ttest_ind` (params: `equal_var`, `alternative`)
+- `ttest_rel`
+
+Non-parametric tests:
+- `mannwhitneyu` (params: `alternative`, `method`)
+- `wilcoxon` (params: `alternative`, `correction`)
+- `kruskal`
+
+Correlation:
+- `pearsonr`
+- `spearmanr` (params: `alternative`, `nan_policy`)
+
+Other:
+- `chisquare` (params: `f_exp`, `ddof`)
+- `levene` (params: `center`, `proportiontocut`)
+
+## Security and Limits
 - Rate limit: 10 requests per minute per IP
 - Maximum array size: 10,000 elements
 - Maximum number size: within float64 range

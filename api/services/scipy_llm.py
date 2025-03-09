@@ -1,7 +1,7 @@
 from typing import List, Any, Union
 import numpy as np
 from scipy import stats
-from .base_service import BaseService
+from api.services.base_service import BaseService
 
 
 class StatisticsService(BaseService):
@@ -73,31 +73,22 @@ class StatisticsService(BaseService):
         raise ValueError(f"Unhandled special case for calculation: {calculation}")
 
     @classmethod
-    def perform_calculation(
-        cls, calculation: str, data: List[Any]
-    ) -> Union[float, List[float], dict]:
-        if calculation not in cls.ALLOWED_FUNCTIONS:
-            raise ValueError(
-                f"Statistical calculation '{calculation}' is not supported."
-            )
+    def perform_calculation(cls, calculation: str, data: List[Any], **params):
+        # Convert data to numpy array
+        array = np.array(data)
 
-        # Check if calculation needs special handling
-        needs_special_handling = any(
-            calculation in special_cases for special_cases in cls.SPECIAL_CASES.values()
-        )
+        # Get the scipy stats function
+        func = getattr(stats, calculation)
 
-        if needs_special_handling:
-            if not isinstance(data, dict):
-                raise ValueError(
-                    f"Calculation '{calculation}' requires dictionary input with specific parameters"
-                )
-            result = cls._handle_special_calculation(calculation, data)
-        else:
-            # Handle simple calculations
-            array = np.array(data)
-            result = cls.ALLOWED_FUNCTIONS[calculation](array)
+        # Call function with data and any additional params
+        result = func(array, **params)
 
-        return cls._convert_result(result)
+        # Handle tuple returns (many scipy functions return multiple values)
+        if hasattr(result, "_fields"):  # Named tuple
+            return {field: getattr(result, field) for field in result._fields}
+        elif isinstance(result, tuple):
+            return list(result)
+        return result
 
     @classmethod
     def _convert_result(cls, result):

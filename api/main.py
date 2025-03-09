@@ -14,9 +14,9 @@ Endpoints:
 - GET /: Returns a welcome message.
 """
 
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, Request
 from pydantic import BaseModel, validator
-from typing import List, Any, Literal
+from typing import List, Any, Literal, Optional, Dict
 from api.services.numpy_llm import CalculatorService
 from api.services.scipy_llm import StatisticsService
 from fastapi.middleware.cors import CORSMiddleware
@@ -69,6 +69,7 @@ class CalculationRequest(BaseModel):
     service: Literal["calculator", "statistics"]
     calculation: str
     data: List[Any]
+    params: Optional[Dict[str, Any]] = {}
 
     @validator("data")
     def validate_data(cls, v):
@@ -93,76 +94,54 @@ def limit_resources():
 
 @app.post("/calculate")
 @limiter.limit("10/minute")  # Limit to 10 requests per minute per IP
-async def calculate(request: CalculationRequest):
+async def calculate(request: Request, calculation_request: CalculationRequest):
     """
     Perform a numerical calculation based on the provided request.
     """
     try:
-        # Set resource limits before calculation
-        limit_resources()
+        logger.info(
+            "calculation_started",
+            service=calculation_request.service,
+            calculation=calculation_request.calculation,
+        )
 
         service = {
             "calculator": CalculatorService,
             "statistics": StatisticsService,
-        }.get(request.service)
+        }.get(calculation_request.service)
 
         if not service:
-            raise ValueError(f"Service '{request.service}' is not supported")
+            raise ValueError(
+                f"Service '{calculation_request.service}' is not supported"
+            )
 
         # Run calculation with timeout
         loop = asyncio.get_event_loop()
         result = await asyncio.wait_for(
             loop.run_in_executor(
                 None,
-                partial(service.perform_calculation, request.calculation, request.data),
+                partial(
+                    service.perform_calculation,
+                    calculation_request.calculation,
+                    calculation_request.data,
+                    **calculation_request.params,
+                ),
             ),
-            timeout=5.0,  # 5 second timeout
+            timeout=5.0,
         )
+
         return {"result": result}
 
     except asyncio.TimeoutError:
         logger.error(
-            "timeout_error", service=request.service, calculation=request.calculation
+            "timeout_error",
+            service=calculation_request.service,
+            calculation=calculation_request.calculation,
         )
-        raise HTTPException(
-            status_code=408,
-            detail={"error": "Request timeout", "message": "Calculation took too long"},
-        )
-
-    except ValueError as e:
-        logger.error(
-            "validation_error",
-            service=request.service,
-            calculation=request.calculation,
-            error=str(e),
-        )
-        raise HTTPException(
-            status_code=400, detail={"error": "Invalid input", "message": str(e)}
-        )
-
-    except (TypeError, RuntimeError) as e:
-        logger.error(
-            "calculation_error",
-            service=request.service,
-            calculation=request.calculation,
-            error=str(e),
-        )
-        raise HTTPException(
-            status_code=400, detail={"error": "Calculation error", "message": str(e)}
-        )
-
+        raise HTTPException(status_code=408, detail="Calculation timed out")
     except Exception as e:
-        logger.error(
-            "unexpected_error",
-            service=request.service,
-            calculation=request.calculation,
-            error=str(e),
-            error_type=type(e).__name__,
-        )
-        raise HTTPException(
-            status_code=500,
-            detail={"error": "Internal server error", "message": str(e)},
-        )
+        logger.error("calculation_error", error=str(e), error_type=type(e).__name__)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/")
