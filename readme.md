@@ -1,45 +1,145 @@
 # FastAPI NumPy and SciPy Calculation Server
 
-This project is an open-source API server built with FastAPI that allows LLM assistants and other clients to perform numerical calculations using NumPy functions as well as advanced statistical analyses using SciPy functions.
+A public API server built with FastAPI that enables numerical calculations and statistical analyses using NumPy and SciPy.
 
-## Features
+## API Services
 
-### NumPy Calculation Endpoint
+### numpy Service (`service: "numpy_llm"`)
+- **Basic Operations:**
+  - `sum`: Sum of array elements
+  - `mean`: Arithmetic mean
+  - `std`: Standard deviation
+  - `min`: Minimum value
+  - `max`: Maximum value
+  - `median`: Median value
+  - `prod`: Product of array elements
+  - `var`: Variance
+  
+- **Array Operations:**
+  - `cumsum`: Cumulative sum
+  - `cumprod`: Cumulative product
+  - `diff`: Calculate discrete difference
+  
+- **Mathematical Functions:**
+  - `abs`: Absolute value
+  - `sqrt`: Square root
+  - `log`: Natural logarithm
+  - `log10`: Base-10 logarithm
+  - `exp`: Exponential
+  - `square`: Square each element
+  
+- **Rounding:**
+  - `floor`: Floor of each element
+  - `ceil`: Ceiling of each element
+  - `round`: Round to given decimals
 
-- **Calculation Endpoint:** Provides a `/calculate` endpoint to perform numerical computations.
-- **Supported Operations:**
-  - **Basic operations:** `sum`, `mean`, `std`, `min`, `max`, `median`
-  - **Advanced operations:** `prod`, `var`, `cumsum`, `cumprod`, `diff`, `abs`, `sqrt`, `log`, `log10`, `exp`, `floor`, `ceil`, `round`
-  - **Trigonometric operations:** `sin`, `cos`, `tan`, `arcsin`, `arccos`, `arctan`, `square`
-- **Error Handling:** Returns appropriate error messages if the requested calculation is unsupported or if the data is in an invalid format.
+- **Trigonometric:**
+  - `sin`: Sine
+  - `cos`: Cosine
+  - `tan`: Tangent
+  - `arcsin`: Inverse sine
+  - `arccos`: Inverse cosine
+  - `arctan`: Inverse tangent
 
-### SciPy Statistics Endpoint
+### scipy Service (`service: "scipy_llm"`)
+- **Distribution Tests:**
+  - `normaltest`: Test for normal distribution
+  - `shapiro`: Shapiro-Wilk test
+  - `anderson`: Anderson-Darling test
+  
+- **Parametric Tests:**
+  - `ttest_1samp`: One-sample t-test
+  - `ttest_ind`: Independent two-sample t-test
+  - `ttest_rel`: Paired t-test
+  - `f_oneway`: One-way ANOVA
+  
+- **Non-parametric Tests:**
+  - `mannwhitneyu`: Mann-Whitney U test
+  - `kruskal`: Kruskal-Wallis H-test
+  - `wilcoxon`: Wilcoxon signed-rank test
+  
+- **Correlation Analysis:**
+  - `pearsonr`: Pearson correlation coefficient
+  - `spearmanr`: Spearman rank correlation
+  
+- **Other Tests:**
+  - `chisquare`: Chi-square test
+  - `fisher_exact`: Fisher exact test
+  - `levene`: Levene test for variance equality
+  - `ks_2samp`: Two-sample Kolmogorov-Smirnov test
+  
+- **Descriptive Statistics:**
+  - `describe`: Summary statistics
+  - `zscore`: Z-score standardization
+  - `skew`: Sample skewness
+  - `kurtosis`: Sample kurtosis
 
-- **Statistics Endpoint:** A dedicated `/calculate` endpoint (in a separate module) for statistical analysis.
-- **Supported Statistical Operations:**
-  - **Regression Analysis:** `linregress`
-  - **T-tests:** `ttest_1samp`, `ttest_ind`, `ttest_rel`
-  - **Correlation Tests:** `pearsonr`, `spearmanr`
-  - **Chi-square Test:** `chisquare`
-  - **ANOVA:** `f_oneway`
-  - **Non-parametric Tests:** `mannwhitneyu`, `kruskal`, `wilcoxon`
-  - **Variance Test:** `levene`
-  - **Normality Tests:** `normaltest`, `shapiro`, `anderson`
-  - **Other Statistical Tests:** `ks_2samp`, `fisher_exact`, `chi2_contingency`
-  - **Descriptive Statistics:** `zscore`, `skew`, `kurtosis`, `describe`
-- **Functionality:** Accepts a JSON payload with the specific statistical operation and the required data, then returns the analysis results in a JSON-friendly format.
+## API Usage
 
-## Getting Started
+### Request Format
+```json
+{
+    "service": "calculator | statistics",
+    "calculation": "operation_name",
+    "data": [1, 2, 3, 4, 5]
+}
+```
 
-### Prerequisites
+### Example Requests
 
-- Python 3.7 or higher
-- pip (Python package manager)
+```bash
+# Calculate mean
+curl -X POST "https://your-api.vercel.app/calculate" \
+     -H "Content-Type: application/json" \
+     -d '{"service":"calculator","calculation":"mean","data":[1,2,3,4,5]}'
 
-### Installation
+# Perform t-test
+curl -X POST "https://your-api.vercel.app/calculate" \
+     -H "Content-Type: application/json" \
+     -d '{"service":"statistics","calculation":"ttest_1samp","data":[1,2,3,4,5]}'
+```
 
-1. **Clone the repository:**
+## Limits and Security
+- Rate limit: 10 requests per minute per IP
+- Maximum array size: 10,000 elements
+- Maximum number size: within float64 range
+- Timeout: 5 seconds per calculation
+- Memory limit: 500MB per request
 
-   ```bash
-   git clone https://github.com/Othmg/llm-stats.git
-   cd your-repo-name
+## Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/llmNum.git
+cd llmNum
+```
+
+2. Install dependencies:
+```bash
+python -m pip install -r requirements.txt
+```
+
+3. Run the server:
+```bash
+uvicorn api.main:app --reload
+```
+
+## Development
+
+### Running Tests
+```bash
+pytest tests/
+```
+
+### Local Development
+The API will be available at `http://localhost:8000`
+
+API documentation available at:
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+## License
+MIT License - feel free to use in your projects
+
+## Contributing
+Contributions welcome! Please feel free to submit a Pull Request.
