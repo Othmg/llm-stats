@@ -17,8 +17,8 @@ Endpoints:
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Any, Literal
-from services.numpy-llm import CalculatorService
-from services.scipy-llm import StatisticsService
+from services.numpy_llm import CalculatorService
+from services.scipy_llm import StatisticsService
 
 app = FastAPI()
 
