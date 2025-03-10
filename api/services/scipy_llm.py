@@ -7,48 +7,19 @@ from api.services.base_service import BaseService
 class StatisticsService(BaseService):
     ALLOWED_FUNCTIONS = {
         # Basic statistics
-        "skew": stats.skew,
-        "kurtosis": stats.kurtosis,
-        "mode": stats.mode,
-        "percentile": np.percentile,
-        "zscore": stats.zscore,
         "describe": stats.describe,
-        # Normality tests
-        "normaltest": stats.normaltest,
-        "shapiro": stats.shapiro,
-        "anderson": stats.anderson,
-        # Parametric tests
-        "ttest_1samp": lambda a, popmean: stats.ttest_1samp(a, popmean=popmean),
-        "ttest_ind": lambda a, b: stats.ttest_ind(a, b),
-        "f_oneway": stats.f_oneway,
-        "levene": stats.levene,
-        # Non-parametric tests
-        "mannwhitneyu": lambda x, y: stats.mannwhitneyu(x, y),
-        "kruskal": stats.kruskal,
-        "wilcoxon": stats.wilcoxon,
         # Correlation tests
         "pearsonr": lambda a, b: stats.pearsonr(a, b),
-        "spearmanr": lambda a, b: stats.spearmanr(a, b),
-        # Categorical tests
-        "chi2_contingency": lambda table: stats.chi2_contingency(table),
-        "fisher_exact": lambda table: stats.fisher_exact(table),
         # Regression
         "linregress": lambda x, y: stats.linregress(x, y)._asdict(),
-        # Distribution tests
-        "ks_2samp": lambda a, b: stats.ks_2samp(a, b),
     }
 
     # Special cases that require specific parameter handling
     SPECIAL_CASES = {
-        "multi_sample": ["f_oneway", "kruskal"],
         "two_sample": [
-            "ttest_ind",
-            "mannwhitneyu",
-            "ks_2samp",
             "pearsonr",
             "spearmanr",
         ],
-        "contingency": ["chi2_contingency", "fisher_exact"],
         "regression": ["linregress"],
     }
 
@@ -65,19 +36,6 @@ class StatisticsService(BaseService):
                 a = np.array(data.get("a"), dtype=float)
                 b = np.array(data.get("b"), dtype=float)
                 result = cls.ALLOWED_FUNCTIONS[calculation](a, b)
-                return cls._convert_result(result)
-
-            elif calculation in cls.SPECIAL_CASES["multi_sample"]:
-                samples = [
-                    np.array(data.get(f"sample_{i}"), dtype=float)
-                    for i in range(len(data))
-                ]
-                result = cls.ALLOWED_FUNCTIONS[calculation](*samples)
-                return cls._convert_result(result)
-
-            elif calculation in cls.SPECIAL_CASES["contingency"]:
-                table = np.array(data.get("table"), dtype=float)
-                result = cls.ALLOWED_FUNCTIONS[calculation](table)
                 return cls._convert_result(result)
 
             raise ValueError(f"Unhandled special case for calculation: {calculation}")

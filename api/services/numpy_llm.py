@@ -14,6 +14,7 @@ class CalculatorService(BaseService):
         "max": np.max,  # Maximum value
         "median": np.median,  # Median value
         "prod": np.prod,  # Product of array elements
+        "percentile": np.percentile,  # Percentile
         "var": np.var,  # Variance
         # Array Operations
         "cumsum": np.cumsum,  # Cumulative sum
