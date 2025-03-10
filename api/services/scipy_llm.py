@@ -122,4 +122,6 @@ class StatisticsService(BaseService):
             return result.tolist()
         elif isinstance(result, tuple):
             return list(result)
+        elif isinstance(result, dict):
+            return {key: cls._convert_result(value) for key, value in result.items()}
         return result
