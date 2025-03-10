@@ -16,7 +16,7 @@ Endpoints:
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from pydantic import BaseModel, validator
-from typing import List, Any, Literal, Optional, Dict
+from typing import List, Any, Literal, Optional, Dict, Union
 from api.services.numpy_llm import CalculatorService
 from api.services.scipy_llm import StatisticsService
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,7 +68,7 @@ app.add_middleware(
 class CalculationRequest(BaseModel):
     service: Literal["calculator", "statistics"]
     calculation: str
-    data: List[Any]
+    data: Union[List[Any], Dict[str, List[float]]]
     params: Optional[Dict[str, Any]] = {}
 
     @validator("data")
