@@ -52,7 +52,7 @@ class CalculatorService(BaseService):
             params: Additional parameters for the numpy function
 
         Returns:
-            The calculation result as a number or list
+            The calculation result as a number or list with floats rounded to 2 decimal places
 
         Raises:
             ValueError: If calculation is not supported or data format is invalid
@@ -66,9 +66,4 @@ class CalculatorService(BaseService):
         array = np.array(data)
         result = cls.ALLOWED_FUNCTIONS[calculation](array, **params)
 
-        # Convert numpy types to Python native types
-        if isinstance(result, np.generic):
-            return result.item()
-        elif isinstance(result, np.ndarray):
-            return result.tolist()
-        return result
+        return cls._convert_result(result)

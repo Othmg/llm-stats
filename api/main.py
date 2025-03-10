@@ -73,39 +73,33 @@ class CalculationRequest(BaseModel):
 
     @validator("data")
     def validate_data(cls, v):
-        if len(v) > 10000:  # Set reasonable limits
-            raise ValueError("Data array too large")
-        # Add size validation for individual numbers
-        if any(abs(float(x)) > 1e308 for x in v if isinstance(x, (int, float))):
-            raise ValueError("Numbers too large - must be within float64 range")
-        # Add type validation
-        if not all(isinstance(x, (int, float)) for x in v):
-            raise ValueError("All values must be numbers")
-            # If v is a list, validate directly
+        # First check the type
+        if not isinstance(v, (list, dict)):
+            raise ValueError("Data must be either a list or a dict of lists")
+
+        # Handle list input
         if isinstance(v, list):
             if len(v) > 10000:
                 raise ValueError("Data array too large")
-            if any(abs(float(x)) > 1e308 for x in v if isinstance(x, (int, float))):
-                raise ValueError("Numbers too large - must be within float64 range")
             if not all(isinstance(x, (int, float)) for x in v):
                 raise ValueError("All values must be numbers")
-        # If v is a dict, validate each list value
+            if any(abs(float(x)) > 1e308 for x in v):
+                raise ValueError("Numbers too large - must be within float64 range")
+
+        # Handle dictionary input
         elif isinstance(v, dict):
             for key, value in v.items():
                 if not isinstance(value, list):
-                    raise ValueError(
-                        f"For dict data, the value for key '{key}' must be a list"
-                    )
+                    raise ValueError(f"Value for key '{key}' must be a list")
                 if len(value) > 10000:
-                    raise ValueError(f"Data array too large in key '{key}'")
-                if any(
-                    abs(float(x)) > 1e308 for x in value if isinstance(x, (int, float))
-                ):
-                    raise ValueError(f"Numbers too large in key '{key}'")
+                    raise ValueError(f"Data array too large for key '{key}'")
                 if not all(isinstance(x, (int, float)) for x in value):
-                    raise ValueError(f"All values must be numbers in key '{key}'")
-        else:
-            raise ValueError("Data must be either a list or a dict of lists")
+                    raise ValueError(f"All values in key '{key}' must be numbers")
+                if any(abs(float(x)) > 1e308 for x in value):
+                    raise ValueError(
+                        f"Numbers in key '{key}' too large - must be within float64 range"
+                    )
+
         return v
 
 

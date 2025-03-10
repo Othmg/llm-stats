@@ -113,15 +113,3 @@ class StatisticsService(BaseService):
             raise ValueError(
                 f"Invalid data format: {str(e)}. All values must be numeric (integers or floats)."
             )
-
-    @classmethod
-    def _convert_result(cls, result):
-        if isinstance(result, np.generic):
-            return result.item()
-        elif isinstance(result, np.ndarray):
-            return result.tolist()
-        elif isinstance(result, tuple):
-            return list(result)
-        elif isinstance(result, dict):
-            return {key: cls._convert_result(value) for key, value in result.items()}
-        return result
