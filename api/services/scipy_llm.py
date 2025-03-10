@@ -104,10 +104,14 @@ class StatisticsService(BaseService):
 
             # Handle tuple returns
             if hasattr(result, "_fields"):  # Named tuple
-                return {field: getattr(result, field) for field in result._fields}
+                result = {field: getattr(result, field) for field in result._fields}
             elif isinstance(result, tuple):
-                return list(result)
-            return result
+                result = list(result)
+
+            # Convert the result to ensure proper rounding
+            return cls._convert_result(
+                result
+            )  # Add this line to ensure consistent rounding
 
         except (ValueError, TypeError) as e:
             raise ValueError(

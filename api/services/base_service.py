@@ -15,7 +15,9 @@ class BaseService(ABC):
     def _convert_result(cls, result: Any) -> Any:
         """Convert result to JSON serializable format with rounded floats."""
         if isinstance(result, dict):
-            return {k: cls._convert_result(v) for k, v in result.items()}
+            return {
+                k: cls._round_float(cls._convert_result(v)) for k, v in result.items()
+            }
         elif isinstance(result, (list, tuple)):
             return [cls._convert_result(x) for x in list(result)]
         elif isinstance(result, np.generic):
