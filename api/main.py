@@ -81,6 +81,31 @@ class CalculationRequest(BaseModel):
         # Add type validation
         if not all(isinstance(x, (int, float)) for x in v):
             raise ValueError("All values must be numbers")
+            # If v is a list, validate directly
+        if isinstance(v, list):
+            if len(v) > 10000:
+                raise ValueError("Data array too large")
+            if any(abs(float(x)) > 1e308 for x in v if isinstance(x, (int, float))):
+                raise ValueError("Numbers too large - must be within float64 range")
+            if not all(isinstance(x, (int, float)) for x in v):
+                raise ValueError("All values must be numbers")
+        # If v is a dict, validate each list value
+        elif isinstance(v, dict):
+            for key, value in v.items():
+                if not isinstance(value, list):
+                    raise ValueError(
+                        f"For dict data, the value for key '{key}' must be a list"
+                    )
+                if len(value) > 10000:
+                    raise ValueError(f"Data array too large in key '{key}'")
+                if any(
+                    abs(float(x)) > 1e308 for x in value if isinstance(x, (int, float))
+                ):
+                    raise ValueError(f"Numbers too large in key '{key}'")
+                if not all(isinstance(x, (int, float)) for x in value):
+                    raise ValueError(f"All values must be numbers in key '{key}'")
+        else:
+            raise ValueError("Data must be either a list or a dict of lists")
         return v
 
 
