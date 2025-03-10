@@ -58,23 +58,27 @@ class StatisticsService(BaseService):
             if calculation in cls.SPECIAL_CASES["regression"]:
                 x = np.array(data.get("x"), dtype=float)
                 y = np.array(data.get("y"), dtype=float)
-                return cls.ALLOWED_FUNCTIONS[calculation](x, y)
+                result = cls.ALLOWED_FUNCTIONS[calculation](x, y)
+                return cls._convert_result(result)
 
             elif calculation in cls.SPECIAL_CASES["two_sample"]:
                 a = np.array(data.get("a"), dtype=float)
                 b = np.array(data.get("b"), dtype=float)
-                return cls.ALLOWED_FUNCTIONS[calculation](a, b)
+                result = cls.ALLOWED_FUNCTIONS[calculation](a, b)
+                return cls._convert_result(result)
 
             elif calculation in cls.SPECIAL_CASES["multi_sample"]:
                 samples = [
                     np.array(data.get(f"sample_{i}"), dtype=float)
                     for i in range(len(data))
                 ]
-                return cls.ALLOWED_FUNCTIONS[calculation](*samples)
+                result = cls.ALLOWED_FUNCTIONS[calculation](*samples)
+                return cls._convert_result(result)
 
             elif calculation in cls.SPECIAL_CASES["contingency"]:
                 table = np.array(data.get("table"), dtype=float)
-                return cls.ALLOWED_FUNCTIONS[calculation](table)
+                result = cls.ALLOWED_FUNCTIONS[calculation](table)
+                return cls._convert_result(result)
 
             raise ValueError(f"Unhandled special case for calculation: {calculation}")
 
