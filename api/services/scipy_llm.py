@@ -54,41 +54,61 @@ class StatisticsService(BaseService):
 
     @classmethod
     def _handle_special_calculation(cls, calculation: str, data: dict):
-        if calculation in cls.SPECIAL_CASES["regression"]:
-            return cls.ALLOWED_FUNCTIONS[calculation](data.get("x"), data.get("y"))
+        try:
+            if calculation in cls.SPECIAL_CASES["regression"]:
+                x = np.array(data.get("x"), dtype=float)
+                y = np.array(data.get("y"), dtype=float)
+                return cls.ALLOWED_FUNCTIONS[calculation](x, y)
 
-        elif calculation in cls.SPECIAL_CASES["two_sample"]:
-            return cls.ALLOWED_FUNCTIONS[calculation](data.get("a"), data.get("b"))
+            elif calculation in cls.SPECIAL_CASES["two_sample"]:
+                a = np.array(data.get("a"), dtype=float)
+                b = np.array(data.get("b"), dtype=float)
+                return cls.ALLOWED_FUNCTIONS[calculation](a, b)
 
-        elif calculation in cls.SPECIAL_CASES["multi_sample"]:
-            # Handle multiple samples for ANOVA and Kruskal-Wallis
-            samples = [data.get(f"sample_{i}") for i in range(len(data))]
-            return cls.ALLOWED_FUNCTIONS[calculation](*samples)
+            elif calculation in cls.SPECIAL_CASES["multi_sample"]:
+                samples = [
+                    np.array(data.get(f"sample_{i}"), dtype=float)
+                    for i in range(len(data))
+                ]
+                return cls.ALLOWED_FUNCTIONS[calculation](*samples)
 
-        elif calculation in cls.SPECIAL_CASES["contingency"]:
-            # Handle contingency table input
-            table = np.array(data.get("table"))
-            return cls.ALLOWED_FUNCTIONS[calculation](table)
+            elif calculation in cls.SPECIAL_CASES["contingency"]:
+                table = np.array(data.get("table"), dtype=float)
+                return cls.ALLOWED_FUNCTIONS[calculation](table)
 
-        raise ValueError(f"Unhandled special case for calculation: {calculation}")
+            raise ValueError(f"Unhandled special case for calculation: {calculation}")
+
+        except (ValueError, TypeError) as e:
+            raise ValueError(
+                f"Invalid data format: {str(e)}. All values must be numeric (integers or floats)."
+            )
 
     @classmethod
-    def perform_calculation(cls, calculation: str, data: List[Any], **params):
-        # Convert data to numpy array
-        array = np.array(data)
+    def perform_calculation(
+        cls, calculation: str, data: Union[dict, List[Any]], **params
+    ):
+        try:
+            # Handle special cases through _handle_special_calculation
+            if any(calculation in cases for cases in cls.SPECIAL_CASES.values()):
+                # No need for conversion, expect data in correct format
+                return cls._handle_special_calculation(calculation, data)
 
-        # Get the scipy stats function
-        func = getattr(stats, calculation)
+            # For other calculations, convert data to float numpy array
+            array = np.array(data, dtype=float)
+            func = getattr(stats, calculation)
+            result = func(array, **params)
 
-        # Call function with data and any additional params
-        result = func(array, **params)
+            # Handle tuple returns
+            if hasattr(result, "_fields"):  # Named tuple
+                return {field: getattr(result, field) for field in result._fields}
+            elif isinstance(result, tuple):
+                return list(result)
+            return result
 
-        # Handle tuple returns (many scipy functions return multiple values)
-        if hasattr(result, "_fields"):  # Named tuple
-            return {field: getattr(result, field) for field in result._fields}
-        elif isinstance(result, tuple):
-            return list(result)
-        return result
+        except (ValueError, TypeError) as e:
+            raise ValueError(
+                f"Invalid data format: {str(e)}. All values must be numeric (integers or floats)."
+            )
 
     @classmethod
     def _convert_result(cls, result):
